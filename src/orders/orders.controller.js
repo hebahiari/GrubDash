@@ -8,11 +8,7 @@ function propretiesExist(req, res, next) {
     const {
         data: { deliverTo, mobileNumber, dishes },
     } = req.body;
-    if (
-        deliverTo &&
-        mobileNumber &&
-        dishes
-    ) {
+    if (deliverTo && mobileNumber && dishes) {
         const newOrder = {
             deliverTo: deliverTo,
             mobileNumber: mobileNumber,
@@ -30,7 +26,9 @@ function propretiesExist(req, res, next) {
 }
 
 function validateDishes(req, res, next) {
-    const { data: { dishes } } = req.body;
+    const {
+        data: { dishes },
+    } = req.body;
     if (Array.isArray(dishes) && dishes.length > 0) {
         return next();
     } else {
@@ -39,7 +37,6 @@ function validateDishes(req, res, next) {
             message: "dishes is not an array or is an empty array!",
         });
     }
-
 }
 
 function validateQuantity(req, res, next) {
@@ -60,17 +57,36 @@ function validateQuantity(req, res, next) {
 }
 
 function validateStatus(req, res, next) {
-    const existingStatus = res.locals.foundOrder.status
-    const { data: { status } } = req.body;
-    if (status && existingStatus !== "delivered" && status !== "invalid") {
-        res.locals.newOrder.status = status
-        return next();
-    } else {
+    const existingStatus = res.locals.foundOrder.status;
+    const {
+        data: { status },
+    } = req.body;
+    if (!status || status === "invalid") {
         next({
             status: 400,
-            message: `status already delivered`,
+            message: `Order must have a status of pending, preparing, out-for-delivery, delivered`,
         });
     }
+    if (existingStatus === "delivered") {
+        next({
+            status: 400,
+            message: `A delivered order cannot be changed`,
+        });
+    }
+    res.locals.newOrder.status = status;
+    return next();
+}
+
+function statusIsPending(req, res, next) {
+    const status = res.locals.foundOrder.status
+    if (status !== "pending") {
+        next({
+            status: 400,
+            message: `An order cannot be deleted unless it is pending`,
+        });
+    }
+    return next();
+
 }
 
 function orderExists(req, res, next) {
@@ -98,18 +114,17 @@ function idMatches(req, res, next) {
             next() :
             next({
                 status: 400,
-                message: `${id} does not match the id: ${orderId}`,
+                message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
             });
     }
     next();
 }
 
-// Route /orders
+// Route "/orders"
 
 function list(req, res, next) {
     res.status(200).json({ data: orders });
 }
-
 
 function create(req, res, next) {
     const newOrder = res.locals.newOrder;
@@ -117,13 +132,12 @@ function create(req, res, next) {
     res.status(201).json({ data: newOrder });
 }
 
-// Route //orders/:orderId
+// Route "/orders/:orderId"
 
 function read(req, res, next) {
     const foundOrder = res.locals.foundOrder;
     res.status(200).json({ data: foundOrder });
 }
-
 
 function update(req, res, next) {
     let foundOrder = res.locals.foundOrder;
@@ -137,21 +151,22 @@ function update(req, res, next) {
 function destroy(req, res, next) {
     const { orderId } = req.params;
     const index = orders.findIndex((order) => order.id === orderId);
-    if (orders[index].status === "pending") {
-        const deletedOrder = orders.splice(index, 1);
-        res.sendStatus(204);
-    } else {
-        next({
-            status: 400,
-            message: `An order cannot be deleted unless it is pending`,
-        });
-    }
+    const deletedOrder = orders.splice(index, 1);
+    res.sendStatus(204);
 }
 
 module.exports = {
     list,
     create: [propretiesExist, validateDishes, validateQuantity, create],
     read: [orderExists, read],
-    update: [orderExists, idMatches, propretiesExist, validateDishes, validateQuantity, validateStatus, update],
-    delete: [orderExists, destroy],
+    update: [
+        orderExists,
+        idMatches,
+        propretiesExist,
+        validateDishes,
+        validateQuantity,
+        validateStatus,
+        update,
+    ],
+    delete: [orderExists, statusIsPending, destroy],
 };

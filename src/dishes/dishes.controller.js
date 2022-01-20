@@ -5,13 +5,13 @@ const nextId = require("../utils/nextId");
 
 //Helper Functions
 
-function validateDataPropreties(req, res, next) {
+function propretiesExist(req, res, next) {
     const {
         data: { name, description, image_url, price },
     } = req.body;
     const values = { name, description, image_url, price };
 
-    //check that all propreties exist
+
     for (const [key, value] of Object.entries(values)) {
         if (!value) {
             return next({
@@ -19,15 +19,9 @@ function validateDataPropreties(req, res, next) {
                 message: `Something is missing! Dish must include ${key}`,
             });
         }
-        //check if price is an interger larger than 0
-        if (key === "price" && (value <= 0 || !Number.isInteger(value))) {
-            return next({
-                status: 400,
-                message: `Dish must have a price that is an integer greater than 0`,
-            });
-        }
-    }
 
+
+    }
     //create a new dish 
     const newDish = {
         description: description,
@@ -36,15 +30,28 @@ function validateDataPropreties(req, res, next) {
         image_url: image_url,
         id: nextId(),
     };
-    res.locals.newdish = newDish;
+    res.locals.newDish = newDish;
     return next();
+}
+
+function validatePrice(req, res, next) {
+    const price = res.locals.newDish.price
+    if (price <= 0 || !Number.isInteger(price)) {
+        return next({
+            status: 400,
+            message: `Dish must have a price that is an integer greater than 0`,
+        });
+    } else {
+        return next();
+    }
+
 }
 
 function dishExists(req, res, next) {
     const { dishId } = req.params;
     const foundDish = dishes.find((dish) => dish.id === dishId);
     if (foundDish) {
-        res.locals.founddish = foundDish;
+        res.locals.foundDish = foundDish;
         return next();
     } else {
         next({ status: 404, message: `Dish does not exist: ${dishId}` });
@@ -62,7 +69,7 @@ function idMatches(req, res, next) {
             next() :
             next({
                 status: 400,
-                message: `${id} does not match the id: ${dishId}`,
+                message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
             });
     }
     next();
@@ -74,21 +81,21 @@ function list(req, res, next) {
 }
 
 function create(req, res, next) {
-    const newDish = res.locals.newdish;
+    const newDish = res.locals.newDish;
     dishes.push(newDish);
     res.status(201).json({ data: newDish });
 }
 
 // Route "dishes/:dishId"
 function read(req, res, next) {
-    const foundDish = res.locals.founddish;
+    const foundDish = res.locals.foundDish;
     res.status(200).json({ data: foundDish });
 }
 
 //
 function update(req, res, next) {
-    let foundDish = res.locals.founddish;
-    const newDish = res.locals.newdish;
+    let foundDish = res.locals.foundDish;
+    const newDish = res.locals.newDish;
     const originalId = foundDish.id;
     foundDish = newDish;
     foundDish["id"] = originalId;
@@ -97,7 +104,7 @@ function update(req, res, next) {
 
 module.exports = {
     list,
-    create: [validateDataPropreties, create],
+    create: [propretiesExist, validatePrice, create],
     read: [dishExists, read],
-    update: [dishExists, validateDataPropreties, idMatches, update],
+    update: [dishExists, propretiesExist, validatePrice, idMatches, update],
 };
