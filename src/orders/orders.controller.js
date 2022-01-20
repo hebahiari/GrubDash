@@ -47,12 +47,12 @@ function validateQuantity(req, res, next) {
         data: { dishes },
     } = req.body;
 
-    dishes.forEach((dish) => {
+    dishes.forEach((dish, index) => {
         const quantity = dish.quantity;
         if (!(quantity && quantity > 0 && Number.isInteger(quantity))) {
             next({
                 status: 400,
-                message: `quantity ${quantity} must be at least 1`,
+                message: `Dish ${index} must have a quantity that is an integer greater than 0`,
             });
         }
     });
@@ -62,7 +62,7 @@ function validateQuantity(req, res, next) {
 function validateStatus(req, res, next) {
     const existingStatus = res.locals.foundOrder.status
     const { data: { status } } = req.body;
-    if (status && existingStatus !== "delivered") {
+    if (status && existingStatus !== "delivered" && status !== "invalid") {
         res.locals.newOrder.status = status
         return next();
     } else {

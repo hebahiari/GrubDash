@@ -9,29 +9,35 @@ function validateDataPropreties(req, res, next) {
     const {
         data: { name, description, image_url, price },
     } = req.body;
-    if (
-        name &&
-        description &&
-        image_url &&
-        price &&
-        price > 0 &&
-        typeof price === "number"
-    ) {
-        const newDish = {
-            description: description,
-            name: name,
-            price: price,
-            image_url: image_url,
-            id: nextId(),
-        };
-        res.locals.newdish = newDish;
-        return next();
-    } else {
-        return next({
-            status: 400,
-            message: "Something is missing! please make sure you entered the following: name, description, image_url, price",
-        });
+    const values = { name, description, image_url, price };
+
+    //check that all propreties exist
+    for (const [key, value] of Object.entries(values)) {
+        if (!value) {
+            return next({
+                status: 400,
+                message: `Something is missing! Dish must include ${key}`,
+            });
+        }
+        //check if price is an interger larger than 0
+        if (key === "price" && (value <= 0 || !Number.isInteger(value))) {
+            return next({
+                status: 400,
+                message: `Dish must have a price that is an integer greater than 0`,
+            });
+        }
     }
+
+    //create a new dish 
+    const newDish = {
+        description: description,
+        name: name,
+        price: price,
+        image_url: image_url,
+        id: nextId(),
+    };
+    res.locals.newdish = newDish;
+    return next();
 }
 
 function dishExists(req, res, next) {
