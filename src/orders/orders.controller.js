@@ -8,21 +8,25 @@ function propretiesExist(req, res, next) {
     const {
         data: { deliverTo, mobileNumber, dishes },
     } = req.body;
-    if (deliverTo && mobileNumber && dishes) {
-        const newOrder = {
-            deliverTo: deliverTo,
-            mobileNumber: mobileNumber,
-            dishes: dishes,
-            id: nextId(),
-        };
-        res.locals.newOrder = newOrder;
-        return next();
-    } else {
-        return next({
-            status: 400,
-            message: "Something is missing! please make sure you entered the following: deliverTo, mobileNumber, dishes, quantity",
-        });
+    const values = { deliverTo, mobileNumber, dishes };
+
+    for (const [key, value] of Object.entries(values)) {
+        if (!value) {
+            return next({
+                status: 400,
+                message: `Something is missing! Order must include ${key}`,
+            });
+        }
     }
+    const newOrder = {
+        deliverTo: deliverTo,
+        mobileNumber: mobileNumber,
+        dishes: dishes,
+        id: nextId(),
+    };
+    res.locals.newOrder = newOrder;
+    return next();
+
 }
 
 function validateDishes(req, res, next) {
@@ -78,7 +82,7 @@ function validateStatus(req, res, next) {
 }
 
 function statusIsPending(req, res, next) {
-    const status = res.locals.foundOrder.status
+    const status = res.locals.foundOrder.status;
     if (status !== "pending") {
         next({
             status: 400,
@@ -86,7 +90,6 @@ function statusIsPending(req, res, next) {
         });
     }
     return next();
-
 }
 
 function orderExists(req, res, next) {
