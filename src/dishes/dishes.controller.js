@@ -5,7 +5,7 @@ const nextId = require("../utils/nextId");
 
 //Helper Functions
 
-function checkRequestDataPropreties(req, res, next) {
+function validateDataPropreties(req, res, next) {
     const {
         data: { name, description, image_url, price },
     } = req.body;
@@ -86,12 +86,12 @@ function update(req, res, next) {
     const originalId = foundDish.id;
     foundDish = newDish;
     foundDish["id"] = originalId;
-    foundDish = res.status(200).json({ data: newDish });
+    res.status(200).json({ data: newDish });
 }
 
 module.exports = {
     list,
-    create: [checkRequestDataPropreties, create],
+    create: [validateDataPropreties, create],
     read: [dishExists, read],
-    update: [dishExists, checkRequestDataPropreties, idMatches, update],
+    update: [dishExists, validateDataPropreties, idMatches, update],
 };
