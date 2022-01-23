@@ -5,7 +5,7 @@ const nextId = require("../utils/nextId");
 
 //Helper Functions
 
-function propretiesExist(req, res, next) {
+function propertiesExist(req, res, next) {
     const {
         data: { name, description, image_url, price },
     } = req.body;
@@ -76,24 +76,24 @@ function idMatches(req, res, next) {
 }
 
 // Route "/dishes"
-function list(req, res, next) {
+function list(req, res) {
     res.status(200).json({ data: dishes });
 }
 
-function create(req, res, next) {
+function create(req, res) {
     const newDish = res.locals.newDish;
     dishes.push(newDish);
     res.status(201).json({ data: newDish });
 }
 
 // Route "dishes/:dishId"
-function read(req, res, next) {
+function read(req, res) {
     const foundDish = res.locals.foundDish;
     res.status(200).json({ data: foundDish });
 }
 
 //
-function update(req, res, next) {
+function update(req, res) {
     let foundDish = res.locals.foundDish;
     const newDish = res.locals.newDish;
     const originalId = foundDish.id;
@@ -104,7 +104,7 @@ function update(req, res, next) {
 
 module.exports = {
     list,
-    create: [propretiesExist, validatePrice, create],
+    create: [propertiesExist, validatePrice, create],
     read: [dishExists, read],
-    update: [dishExists, propretiesExist, validatePrice, idMatches, update],
+    update: [dishExists, propertiesExist, validatePrice, idMatches, update],
 };

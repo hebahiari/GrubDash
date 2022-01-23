@@ -4,7 +4,7 @@ const nextId = require("../utils/nextId");
 
 // Helper Functions
 
-function propretiesExist(req, res, next) {
+function propertiesExist(req, res, next) {
     const {
         data: { deliverTo, mobileNumber, dishes },
     } = req.body;
@@ -18,6 +18,7 @@ function propretiesExist(req, res, next) {
             });
         }
     }
+
     const newOrder = {
         deliverTo: deliverTo,
         mobileNumber: mobileNumber,
@@ -125,11 +126,11 @@ function idMatches(req, res, next) {
 
 // Route "/orders"
 
-function list(req, res, next) {
+function list(req, res) {
     res.status(200).json({ data: orders });
 }
 
-function create(req, res, next) {
+function create(req, res) {
     const newOrder = res.locals.newOrder;
     orders.push(newOrder);
     res.status(201).json({ data: newOrder });
@@ -137,12 +138,12 @@ function create(req, res, next) {
 
 // Route "/orders/:orderId"
 
-function read(req, res, next) {
+function read(req, res) {
     const foundOrder = res.locals.foundOrder;
     res.status(200).json({ data: foundOrder });
 }
 
-function update(req, res, next) {
+function update(req, res) {
     let foundOrder = res.locals.foundOrder;
     const newOrder = res.locals.newOrder;
     const originalId = foundOrder.id;
@@ -151,7 +152,7 @@ function update(req, res, next) {
     res.status(200).json({ data: newOrder });
 }
 
-function destroy(req, res, next) {
+function destroy(req, res) {
     const { orderId } = req.params;
     const index = orders.findIndex((order) => order.id === orderId);
     const deletedOrder = orders.splice(index, 1);
@@ -160,12 +161,12 @@ function destroy(req, res, next) {
 
 module.exports = {
     list,
-    create: [propretiesExist, validateDishes, validateQuantity, create],
+    create: [propertiesExist, validateDishes, validateQuantity, create],
     read: [orderExists, read],
     update: [
         orderExists,
         idMatches,
-        propretiesExist,
+        propertiesExist,
         validateDishes,
         validateQuantity,
         validateStatus,
